@@ -1,5 +1,5 @@
 from databases import *
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request, redirect, render_template,url_for
 from flask import session as login_session
 
 app = Flask(__name__)
@@ -16,7 +16,7 @@ def login():
     if user != None and user.verify_password(request.form["password"]):
         login_session['name'] = user.username
         login_session['logged_in'] = True
-        return logged_in()
+        return redirect(url_for('logged_in'))
     else:
         return home()
 
@@ -26,17 +26,23 @@ def signup():
     #check that username isn't already taken
     user = get_user(request.form['username'])
     if user == None:
-        add_user(request.form['username'],request.form['password'])
+        add_user(request.form['username'],request.form['password'], request.form['food'])
     return home()
 
 
-@app.route('/logged-in')
+@app.route('/logged-in', methods = ["POST","GET"])
 def logged_in():
-    return render_template('logged.html')
+    user = get_user(login_session['name'])
+    if  request.method == "POST":
+        food = request.form["new_food"]
+        add_food(food, user)
+    return render_template('logged.html', user = user)
 
 
 @app.route('/logout')
 def logout():
+    # login_session.pop('name')
+    login_session['logged_in'] = False
     return home()
 
 
